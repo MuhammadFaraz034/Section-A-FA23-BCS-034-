@@ -1,0 +1,142 @@
+
+import 'package:flutter/material.dart';
+import '../services/supabase_service.dart';
+import 'update_screen.dart';
+
+class ListScreen extends StatefulWidget {
+  @override
+  _ListScreenState createState() => _ListScreenState();
+}
+
+class _ListScreenState extends State<ListScreen> {
+  final SupabaseService _service = SupabaseService();
+  bool _loading = true;
+  List<Map<String, dynamic>> _items = [];
+  int _hoveredIndex = -1;
+
+  // Theme colors
+  final Color neonMagenta = const Color(0xFFFF00FF);
+  final Color neonPurple = const Color(0xFF6A0DAD);
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    try {
+      _items = await _service.fetchRecords();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Load failed: $e')));
+    } finally {
+      setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _delete(int id) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('Delete record?'),
+        content: Text('This will permanently remove the record.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: Text('Delete', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (ok != true) return;
+
+    try {
+      await _service.deleteRecord(id);
+      await _load();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted'), backgroundColor: Colors.green));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Delete failed: $e'), backgroundColor: Colors.red));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Records'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(onPressed: _load, icon: Icon(Icons.refresh, color: neonMagenta)),
+        ],
+      ),
+      body: Container(
+        padding: EdgeInsets.all(16),
+        // Background: dark purple -> black gradient
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: [Colors.black, Color(0xFF1B003B)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        ),
+        child: _loading
+            ? Center(child: CircularProgressIndicator(color: neonMagenta))
+            : _items.isEmpty
+                ? Center(child: Text('No records found', style: TextStyle(color: Colors.white60)))
+                : ListView.separated(
+                    itemCount: _items.length,
+                    separatorBuilder: (_, __) => SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final item = _items[index];
+                      return MouseRegion(
+                        onEnter: (_) => setState(() => _hoveredIndex = index),
+                        onExit: (_) => setState(() => _hoveredIndex = -1),
+                        child: AnimatedContainer(
+                          duration: Duration(milliseconds: 160),
+                          padding: EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            // Hover effect with subtle magenta glow
+                            color: _hoveredIndex == index ? Colors.black.withOpacity(0.8) : Colors.black.withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: neonPurple.withOpacity(0.4)),
+                            boxShadow: _hoveredIndex == index ? [BoxShadow(color: neonMagenta.withOpacity(0.25), blurRadius: 16)] : [],
+                          ),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 26,
+                                backgroundColor: neonMagenta.withOpacity(0.15),
+                                child: Text(item['full_name'] != null && item['full_name'].toString().isNotEmpty ? item['full_name'][0].toUpperCase() : '?', style: TextStyle(color: neonMagenta, fontWeight: FontWeight.bold)),
+                              ),
+                              SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(item['full_name'] ?? '', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                                    SizedBox(height: 4),
+                                    Text(item['email'] ?? '', style: TextStyle(color: Colors.white60)),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              IconButton(
+                                tooltip: 'Edit',
+                                onPressed: () async {
+                                  await Navigator.push(context, MaterialPageRoute(builder: (_) => UpdateScreen(record: item)));
+                                  await _load();
+                                },
+                                icon: Icon(Icons.edit, color: neonMagenta),
+                              ),
+                              IconButton(
+                                tooltip: 'Delete',
+                                onPressed: () => _delete(item['id'] as int),
+                                icon: Icon(Icons.delete_outline, color: Colors.redAccent),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+      ),
+    );
+  }
+}

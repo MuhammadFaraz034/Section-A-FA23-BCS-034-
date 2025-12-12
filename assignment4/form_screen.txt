@@ -1,0 +1,262 @@
+
+import 'package:flutter/material.dart';
+import 'list_screen.dart';
+import '../services/supabase_service.dart';
+
+class FormScreen extends StatefulWidget {
+  @override
+  _FormScreenState createState() => _FormScreenState();
+}
+
+class _FormScreenState extends State<FormScreen> with SingleTickerProviderStateMixin {
+  final _formKey = GlobalKey<FormState>();
+  final SupabaseService _service = SupabaseService();
+
+  final TextEditingController _name = TextEditingController();
+  final TextEditingController _email = TextEditingController();
+  final TextEditingController _phone = TextEditingController();
+  final TextEditingController _address = TextEditingController();
+  String _gender = 'Male';
+
+  bool _isHover = false;
+  bool _isSubmitting = false;
+
+  // Theme colors
+  final Color neonMagenta = const Color(0xFFFF00FF);
+  final Color neonPink = const Color(0xFFFF69B4); // Cyberpunk Pink Neon for headings
+  final Color neonPurple = const Color(0xFF6A0DAD);
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _email.dispose();
+    _phone.dispose();
+    _address.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSubmitting = true);
+    try {
+      await _service.insertRecord({
+        'full_name': _name.text.trim(),
+        'email': _email.text.trim(),
+        'phone': _phone.text.trim(),
+        'address': _address.text.trim(),
+        'gender': _gender,
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Record created successfully'), backgroundColor: Colors.green),
+      );
+
+      _formKey.currentState!.reset();
+      setState(() => _gender = 'Male');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      setState(() => _isSubmitting = false);
+    }
+  }
+
+  // Cyberpunk Pink Neon Headings
+  Widget _neonHeading(String title, String subtitle) {
+    return Column(
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            color: neonPink,
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            shadows: [
+              Shadow(blurRadius: 18, color: neonPink.withOpacity(0.5), offset: Offset(0, 0)),
+              Shadow(blurRadius: 8, color: neonPink.withOpacity(0.5), offset: Offset(0, 0)),
+            ],
+          ),
+        ),
+        SizedBox(height: 6),
+        Text(subtitle, style: TextStyle(color: Colors.white60)),
+        SizedBox(height: 18),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text('Submission Form', style: TextStyle(letterSpacing: 0.6)),
+        actions: [
+          TextButton.icon(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ListScreen())),
+            icon: Icon(Icons.list, color: neonMagenta),
+            label: Text('Records', style: TextStyle(color: neonMagenta)),
+          )
+        ],
+      ),
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          // Background: dark purple -> black gradient
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.black, Color(0xFF1B003B), Colors.black], // Black and a dark purple
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+
+          // Centered card
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 820),
+                child: Card(
+                  color: Colors.grey[900]!.withOpacity(0.85),
+                  elevation: 20,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(color: neonPurple.withOpacity(0.5), width: 1.5), // Subtle border
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 28.0, horizontal: 28.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _neonHeading('Data Submission', 'Fill details and press Submit'),
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _name,
+                                      decoration: InputDecoration(
+                                        labelText: 'Full Name',
+                                      ),
+                                      validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                                    ),
+                                  ),
+                                  SizedBox(width: 16),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _email,
+                                      decoration: InputDecoration(
+                                        labelText: 'Email',
+                                      ),
+                                      validator: (v) => v != null && v.contains('@') ? null : 'Enter valid email',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 14),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _phone,
+                                      decoration: InputDecoration(labelText: 'Phone Number'),
+                                      validator: (v) => v != null && v.trim().length >= 10 ? null : 'Invalid phone',
+                                    ),
+                                  ),
+                                  SizedBox(width: 16),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _address,
+                                      decoration: InputDecoration(labelText: 'Address'),
+                                      validator: (v) => v != null && v.trim().isNotEmpty ? null : 'Required',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 14),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: DropdownButtonFormField<String>(
+                                      value: _gender,
+                                      dropdownColor: Colors.black, // Dark dropdown
+                                      decoration: InputDecoration(labelText: 'Gender'),
+                                      items: ['Male', 'Female', 'Other'].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+                                      onChanged: (v) => setState(() => _gender = v ?? 'Male'),
+                                    ),
+                                  ),
+                                  SizedBox(width: 16),
+                                  Expanded(child: Container()), // spacing
+                                ],
+                              ),
+                              SizedBox(height: 22),
+
+                              // Submit row
+                              Row(
+                                children: [
+                                  // Submit button with purple glow
+                                  MouseRegion(
+                                    onEnter: (_) => setState(() => _isHover = true),
+                                    onExit: (_) => setState(() => _isHover = false),
+                                    child: AnimatedContainer(
+                                      duration: Duration(milliseconds: 180),
+                                      decoration: BoxDecoration(
+                                        boxShadow: _isHover
+                                            ? [BoxShadow(color: neonPurple.withOpacity(0.8), blurRadius: 18, spreadRadius: 1)]
+                                            : [BoxShadow(color: neonPurple.withOpacity(0.35), blurRadius: 8, spreadRadius: 0.5)], // Subtle base glow
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: ElevatedButton.icon(
+                                        icon: _isSubmitting ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black)) : Icon(Icons.send),
+                                        label: Text(_isSubmitting ? 'Submitting...' : 'Submit'),
+                                        onPressed: _isSubmitting ? null : _submit,
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: neonMagenta,
+                                          foregroundColor: Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+
+                                  SizedBox(width: 16),
+                                  TextButton.icon(
+                                    onPressed: () {
+                                      _formKey.currentState?.reset();
+                                      setState(() => _gender = 'Male');
+                                    },
+                                    icon: Icon(Icons.refresh, color: neonMagenta),
+                                    label: Text('Reset', style: TextStyle(color: neonMagenta)),
+                                  ),
+
+                                  Spacer(),
+
+                                  TextButton.icon(
+                                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ListScreen())),
+                                    icon: Icon(Icons.list, color: neonMagenta),
+                                    label: Text('View Records', style: TextStyle(color: neonMagenta)),
+                                  ),
+                                ],
+                              )
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

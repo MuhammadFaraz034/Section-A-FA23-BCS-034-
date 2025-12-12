@@ -1,0 +1,52 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+class SupabaseService {
+  final supabase = Supabase.instance.client;
+
+  /// INSERT RECORD
+  Future<void> insertRecord(Map<String, dynamic> data) async {
+    try {
+      await supabase.from('submissions').insert(data);
+    } catch (e) {
+      throw Exception("Insert failed: $e");
+    }
+  }
+
+  /// FETCH ALL RECORDS
+  Future<List<Map<String, dynamic>>> fetchRecords() async {
+    try {
+      final response = await supabase
+          .from('submissions')
+          .select()
+          .order('id', ascending: false);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      throw Exception("Fetch failed: $e");
+    }
+  }
+
+  /// UPDATE RECORD
+  Future<void> updateRecord(int id, Map<String, dynamic> data) async {
+    try {
+      await supabase
+          .from('submissions')
+          .update(data)
+          .eq('id', id);
+    } catch (e) {
+      throw Exception("Update failed: $e");
+    }
+  }
+
+  /// DELETE RECORD
+  Future<void> deleteRecord(int id) async {
+    try {
+      await supabase
+          .from('submissions')
+          .delete()
+          .eq('id', id);
+    } catch (e) {
+      throw Exception("Delete failed: $e");
+    }
+  }
+}

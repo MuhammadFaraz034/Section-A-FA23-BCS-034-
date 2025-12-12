@@ -1,0 +1,79 @@
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'screens/form_screen.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    // Your Supabase credentials
+    url: 'https://ihyrszbtfoantuavogky.supabase.co',
+    anonKey: 'sb_publishable_EnZK2LI-UObXw_c0wk0fDw_doWSkZ-E',
+  );
+
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  // Theme colors
+  final Color neonMagenta = const Color(0xFFFF00FF);
+  final Color neonPurple = const Color(0xFF6A0DAD); // For button glow and borders
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Assignment_04 - Cyber Neon',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark().copyWith(
+        // Background: dark purple -> black gradient in screens, but base is black
+        scaffoldBackgroundColor: Colors.black, 
+        
+        // Primary color for app bar, etc.
+        primaryColor: neonMagenta,
+        colorScheme: ColorScheme.dark(
+          primary: neonMagenta,
+          secondary: neonMagenta, // Accent color
+        ),
+        
+        // Text field styling with purple accent borders
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.purple.withOpacity(0.08), // Subtle dark fill
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: neonPurple, width: 2), // Purple accent border
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: neonMagenta, width: 2.5), // Magenta on focus
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: neonPurple.withOpacity(0.6), width: 1.5),
+          ),
+          labelStyle: TextStyle(color: Colors.white70),
+        ),
+        
+        // Text theme
+        textTheme: ThemeData.dark().textTheme.apply(
+              bodyColor: Colors.white,
+              displayColor: Colors.white,
+            ),
+            
+        // Elevated Button styling with purple glow
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.black, // Text color
+            backgroundColor: neonMagenta, // Button color
+            padding: EdgeInsets.symmetric(vertical: 14, horizontal: 28),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            // The purple glow is added in the individual button widget (FormScreen, UpdateScreen)
+          ),
+        ),
+      ),
+      home: FormScreen(),
+    );
+  }
+}

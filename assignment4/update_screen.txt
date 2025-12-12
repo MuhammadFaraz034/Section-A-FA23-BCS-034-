@@ -1,0 +1,243 @@
+import 'package:flutter/material.dart';
+import '../services/supabase_service.dart';
+
+class UpdateScreen extends StatefulWidget {
+  final Map<String, dynamic> record;
+  UpdateScreen({required this.record});
+
+  @override
+  _UpdateScreenState createState() => _UpdateScreenState();
+}
+
+class _UpdateScreenState extends State<UpdateScreen> {
+  final service = SupabaseService();
+  final _formKey = GlobalKey<FormState>();
+
+  late TextEditingController name;
+  late TextEditingController email;
+  late TextEditingController phone;
+  late TextEditingController address;
+  late String gender;
+
+  bool _isHovered = false;
+  bool _isSubmitting = false;
+
+  // Theme Colors (Adjusted for cyberpunk theme)
+  final Color neonMagenta = const Color(0xFFFF00FF); // Accent color
+  final Color neonPink = const Color(0xFFFF69B4); // Cyberpunk Pink Neon for headings
+  final Color neonPurple = const Color(0xFF6A0DAD); // For button glow and borders
+  final Color backgroundColor1 = Colors.black;
+  final Color backgroundColor2 = const Color(0xFF1B003B); // Dark purple for gradient
+  final Color cardColor = Colors.grey; // semi-transparent applied later
+
+  @override
+  void initState() {
+    super.initState();
+    name = TextEditingController(text: widget.record['full_name']?.toString() ?? '');
+    email = TextEditingController(text: widget.record['email']?.toString() ?? '');
+    phone = TextEditingController(text: widget.record['phone']?.toString() ?? '');
+    address = TextEditingController(text: widget.record['address']?.toString() ?? '');
+    gender = widget.record['gender']?.toString() ?? 'Male';
+  }
+
+  @override
+  void dispose() {
+    name.dispose();
+    email.dispose();
+    phone.dispose();
+    address.dispose();
+    super.dispose();
+  }
+  
+  // Custom text field with cyberpunk theme
+  Widget _buildTextField(TextEditingController controller, String labelText, String? Function(String?) validator) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: labelText,
+        labelStyle: TextStyle(color: Colors.white70),
+        filled: true,
+        fillColor: Colors.purple.withOpacity(0.08),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: neonPurple, width: 2), // Purple accent border
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: neonMagenta, width: 2.5),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: neonPurple.withOpacity(0.6), width: 1.5),
+        ),
+      ),
+      style: TextStyle(color: Colors.white),
+      validator: validator,
+    );
+  }
+
+  // Custom dropdown with cyberpunk theme
+  Widget _buildDropdownField(String value, String labelText, List<String> items, void Function(String?) onChanged) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: InputDecoration(
+        labelText: labelText,
+        labelStyle: TextStyle(color: Colors.white70),
+        filled: true,
+        fillColor: Colors.purple.withOpacity(0.08),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: neonPurple, width: 2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: neonMagenta, width: 2.5),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: neonPurple.withOpacity(0.6), width: 1.5),
+        ),
+      ),
+      dropdownColor: Colors.black, // Dark dropdown
+      style: TextStyle(color: Colors.white),
+      items: items.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+      onChanged: onChanged,
+    );
+  }
+
+  Future<void> _updateRecord() async {
+    if (!_formKey.currentState!.validate()) return;
+    
+    setState(() => _isSubmitting = true);
+
+    try {
+      await service.updateRecord(widget.record['id'] as int, {
+        'full_name': name.text.trim(),
+        'email': email.text.trim(),
+        'phone': phone.text.trim(),
+        'address': address.text.trim(),
+        'gender': gender,
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Updated!'), backgroundColor: Colors.green),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Update failed: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      setState(() => _isSubmitting = false);
+    }
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Update Record'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: Container(
+        padding: EdgeInsets.all(18),
+        // Background: dark purple -> black gradient
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [backgroundColor1, backgroundColor2],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 760),
+            child: Card(
+              color: cardColor.withOpacity(0.85),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: neonPurple.withOpacity(0.5), width: 1.5),
+              ),
+              elevation: 22,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 26.0, vertical: 26.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.edit, size: 46, color: neonPink), // Pink icon
+                      SizedBox(height: 8),
+                      Text(
+                        'Update Your Information',
+                        style: TextStyle(
+                          fontSize: 22, 
+                          fontWeight: FontWeight.bold, 
+                          color: neonPink,
+                          shadows: [
+                            Shadow(blurRadius: 18, color: neonPink.withOpacity(0.5), offset: Offset(0, 0)),
+                          ]
+                        ),
+                      ),
+                      SizedBox(height: 6),
+                      Text('Modify fields then press Update', style: TextStyle(color: Colors.white60)),
+                      SizedBox(height: 18),
+
+                      // Text Fields with new builder
+                      _buildTextField(name, 'Full Name', (v) => v == null || v.trim().isEmpty ? 'Required' : null),
+                      SizedBox(height: 12),
+                      _buildTextField(email, 'Email', (v) => v != null && v.contains('@') ? null : 'Invalid email'),
+                      SizedBox(height: 12),
+                      _buildTextField(phone, 'Phone Number', (v) => v != null && v.trim().length >= 10 ? null : 'Invalid phone'),
+                      SizedBox(height: 12),
+                      _buildTextField(address, 'Address', (v) => v != null && v.trim().isNotEmpty ? null : 'Required'),
+                      SizedBox(height: 12),
+
+                      // Dropdown Field with new builder
+                      _buildDropdownField(
+                        gender,
+                        'Gender',
+                        ['Male', 'Female', 'Other'],
+                        (v) => setState(() => gender = v ?? gender),
+                      ),
+                      SizedBox(height: 18),
+
+                      // Update button with purple glow
+                      MouseRegion(
+                        onEnter: (_) => setState(() => _isHovered = true),
+                        onExit: (_) => setState(() => _isHovered = false),
+                        child: AnimatedContainer(
+                          duration: Duration(milliseconds: 160),
+                          decoration: BoxDecoration(
+                            boxShadow: _isHovered
+                                ? [BoxShadow(color: neonPurple.withOpacity(0.8), blurRadius: 18, spreadRadius: 2)]
+                                : [BoxShadow(color: neonPurple.withOpacity(0.35), blurRadius: 8, spreadRadius: 0.5)],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: neonMagenta,
+                              foregroundColor: Colors.black,
+                              padding: EdgeInsets.symmetric(vertical: 14, horizontal: 28),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: _isSubmitting ? null : _updateRecord,
+                            child: _isSubmitting
+                                ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black)) 
+                                : Text('Update', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

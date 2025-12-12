@@ -1,0 +1,35 @@
+
+name: assignment_04
+description: A submission form Flutter app with Supabase CRUD integration.
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Supabase for database CRUD
+  supabase_flutter: ^2.5.6
+
+  # State management (optional but useful)
+  provider: ^6.1.2
+
+  # For form validation
+  flutter_hooks: ^0.20.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^3.0.2
+
+flutter:
+
+  uses-material-design: true
+
+  assets:
+    - assets/

@@ -1,0 +1,28 @@
+
+name: quiz_4_supabase_auth
+description: A Flutter app implementing email-based registration and login using Supabase Authentication.
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0' 
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Supabase integration (Authentication and DB access)
+  supabase_flutter: ^2.5.0 
+
+  # Comprehensive email input validation (using the corrected version)
+  email_validator: ^3.0.0 
+  
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true

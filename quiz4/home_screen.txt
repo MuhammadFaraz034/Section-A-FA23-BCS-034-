@@ -1,0 +1,154 @@
+
+// lib/screens/home_screen.dart
+
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../main.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  // --- Supabase Logout Logic ---
+  Future<void> _signOut(BuildContext context) async {
+    try {
+      await supabase.auth.signOut();
+      if (context.mounted) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: const Text('Logout failed.'),
+              backgroundColor: Colors.red[700]),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Fetch authenticated user details
+    final User? user = supabase.auth.currentUser;
+
+    if (user == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      });
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('User Home Dashboard'),
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => _signOut(context),
+            tooltip: 'Logout',
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Account Information',
+              style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF212121)),
+            ),
+            const Divider(height: 40, thickness: 1.5, color: Color(0xFFE0E0E0)),
+
+            // Display Logged-in User Data
+            _userInfoTile(
+              title: 'Email Address',
+              subtitle: user.email ?? 'N/A',
+              icon: Icons.email,
+              color: const Color(0xFF212121),
+            ),
+            _userInfoTile(
+              title: 'Supabase User ID (UID)',
+              subtitle: user.id,
+              icon: Icons.fingerprint,
+              color: Colors.grey[700]!,
+            ),
+            _userInfoTile(
+              title: 'Email Verified',
+              subtitle: user.emailConfirmedAt != null
+                  ? 'Yes'
+                  : 'No (Action Required)',
+              icon: Icons.verified_user,
+              // Use Success Green for verified, and Amber (Accent) for pending verification
+              color: user.emailConfirmedAt != null
+                  ? Colors.green[600]!
+                  : Theme.of(context).colorScheme.secondary,
+            ),
+            _userInfoTile(
+              title: 'Account Created',
+              subtitle: user.createdAt.substring(0, 10),
+              icon: Icons.calendar_today,
+              color: Colors.grey[700]!,
+            ),
+            const SizedBox(height: 40),
+
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: () => _signOut(context),
+                icon: const Icon(Icons.exit_to_app),
+                label: const Text('LOGOUT'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(200, 50),
+                  textStyle: const TextStyle(fontSize: 16),
+                  backgroundColor:
+                      Colors.red[700], // Use a strong red for security actions
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Helper widget for displaying user info
+  Widget _userInfoTile(
+      {required String title,
+      required String subtitle,
+      required IconData icon,
+      required Color color}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 30, color: color),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Color(0xFF424242)),
+                ),
+                const SizedBox(height: 4),
+                SelectableText(
+                  subtitle,
+                  style: TextStyle(fontSize: 14, color: color),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

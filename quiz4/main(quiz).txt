@@ -1,0 +1,119 @@
+
+// lib/main.dart
+
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'screens/login_screen.dart';
+import 'screens/registration_screen.dart';
+import 'screens/home_screen.dart';
+
+// ⚠️ IMPORTANT: Replace with your actual keys
+const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: SUPABASE_URL,
+    anonKey: SUPABASE_ANON_KEY,
+  );
+
+  runApp(const MyApp());
+}
+
+// Global accessor for Supabase client
+final supabase = Supabase.instance.client;
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  // Define the primary brand color (Deep Indigo: 0xFF3F51B5)
+  static const MaterialColor primaryIndigo = MaterialColor(
+    0xFF3F51B5,
+    <int, Color>{
+      50: Color(0xFFE8EAF6),
+      100: Color(0xFFC5CAE9),
+      500: Color(0xFF3F51B5), // Used by default
+      700: Color(0xFF303F9F),
+      900: Color(0xFF1A237E),
+    },
+  );
+
+  // Define the accent color (Amber)
+  static const Color accentAmber = Color(0xFFFFB300);
+  static const Color backgroundLight = Color(0xFFF5F5F5);
+  static const Color textDark = Color(0xFF212121);
+  static const Color labelGray = Color(0xFF616161);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Supabase Auth Demo',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        // Set the Primary Indigo color
+        primarySwatch: primaryIndigo,
+        // Define a full ColorScheme explicitly to avoid the fromSwatch error
+        colorScheme: const ColorScheme.light(
+          primary: primaryIndigo,
+          secondary: accentAmber, // Accent color
+          error: Colors.red,
+          surface: Colors.white,
+          background: backgroundLight,
+          onPrimary: Colors.white,
+          onSecondary: Colors.black,
+          onError: Colors.white,
+          onBackground: textDark,
+          onSurface: textDark,
+        ),
+        scaffoldBackgroundColor: backgroundLight, // Light gray background
+        // Define input field styling
+        inputDecorationTheme: const InputDecorationTheme(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(8.0)),
+            borderSide: BorderSide(color: Color(0xFFB0BEC5)), // Light border
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(8.0)),
+            borderSide: BorderSide(
+                color: primaryIndigo, width: 2.0), // Indigo focus border
+          ),
+          labelStyle: TextStyle(color: labelGray), // Medium gray label
+        ),
+        // Define button styling
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryIndigo, // Primary Indigo for buttons
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            textStyle: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: primaryIndigo,
+          foregroundColor: Colors.white,
+          elevation: 2,
+        ),
+        // Set default text color for headings
+        textTheme: const TextTheme(
+          displayLarge: TextStyle(color: textDark),
+          titleLarge: TextStyle(color: textDark),
+        ),
+      ),
+      // Check initial auth state to set the starting screen
+      home: supabase.auth.currentUser == null
+          ? const LoginScreen()
+          : const HomeScreen(),
+      // Define routes
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegistrationScreen(),
+        '/home': (context) => const HomeScreen(),
+      },
+    );
+  }
+}
